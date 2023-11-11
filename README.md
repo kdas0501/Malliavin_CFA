@@ -3,9 +3,9 @@ This repository contains working code for pricing European put options with piec
 
 Title: Explicit approximations of option prices via Malliavin calculus in a general stochastic volatility framework
 
-Authors: Kaustav Das (Monash University) and Nicolas Langrene.
+Authors: Kaustav Das (Monash University) and Nicolas Langrené (BNU-HKBU United International College).
 
-email addresses: kaustav.das@monash.edu and nicolas@langrene.com
+email addresses: kaustav.das@monash.edu and nicolaslangrene@uic.edu.cn
 
 
 

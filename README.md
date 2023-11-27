@@ -21,14 +21,11 @@ The following .py files are required in order to compute the closed-form approxi
 - **Verhulst_CFA_Malliavin.py:**
   Computes the price of a European put option in the Verhulst model with piecewise-constant parameter inputs via the Malliavin calculus closed-form approximation method.
   
-- **Heston_CFA_mixing.py:**
-    Computes the price of a European put option in the Heston model with piecewise-constant parameter inputs via the mixing solution closed-form approximation method.
-  
 - **ODE_Solver.py:**
   Computes the ODE for v_{0, t} in the Verhulst model with piecewise_constant parameter inputs.
     
 - **OmgG.py:**
-  Contains functions OmgG1, OmgG2, OmgG3, OmgG4, methods which compute the integral operator (1 to 4 fold) for piecewise-constant parameter inputs.
+  Contains methods OmgG1, OmgG2, OmgG3, OmgG4, methods which compute the integral operator (1 to 4 fold) for piecewise-constant parameter inputs.
   
 - **PhiGo.py:**
   Computes the n-fold function Phi for any n.

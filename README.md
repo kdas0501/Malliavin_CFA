@@ -22,7 +22,7 @@ The following .py files are required in order to compute the closed-form approxi
   Computes the price of a European put option in the Verhulst model with piecewise-constant parameter inputs via the Malliavin calculus closed-form approximation method.
   
 - **ODE_Solver.py:**
-  Computes the ODE for v_{0, t} in the Verhulst model with piecewise_constant parameter inputs.
+  Computes the ODE for v_{0, t} in the Verhulst model with piecewise-constant parameter inputs.
     
 - **OmgG.py:**
   Contains methods OmgG1, OmgG2, OmgG3, OmgG4, methods which compute the integral operator (1 to 4 fold) for piecewise-constant parameter inputs.

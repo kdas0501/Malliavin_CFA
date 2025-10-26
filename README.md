@@ -47,10 +47,10 @@ The rest of the .py files are auxiliary files that are not required for the clos
     Computes the price of a European put/call option in the Heston, GARCH diffusion, Ornstein-Uhlenbeck, Inverse-Gamma, SABR-mu, and Verhulst models with piecewise-constant parameter inputs via the mixing solution Monte-Carlo method.
   
 - **Verhulst_compare_pw.py:**
-    Compares the price and implied volatility of a European put option in the Verhulst model with piecewise-constant parameter inputs, where the price is obtained via the Malliaivn calculus closed-form approximation method and mixing solution Monte-Carlo method.
+    Compares the price and implied volatility of a European put option in the Verhulst model with piecewise-constant parameter inputs, where the price is obtained via the Malliavin calculus closed-form approximation method and mixing solution Monte-Carlo method.
 
 - **SABRmu_compare_pw.py:**
-    Compares the price and implied volatility of a European put option in the SABR-mu model with piecewise-constant parameter inputs, where the price is obtained via the Malliaivn calculus closed-form approximation method and mixing solution Monte-Carlo method.
+    Compares the price and implied volatility of a European put option in the SABR-mu model with piecewise-constant parameter inputs, where the price is obtained via the Malliavin calculus closed-form approximation method and mixing solution Monte-Carlo method.
     
 - **BSform_pw.py:** 
   Computes the usual Black-Scholes price of a European put/call option for piecewise-constant parameter inputs.

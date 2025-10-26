@@ -9,7 +9,7 @@ general stochastic volatility framework"
 Description: Computes the explicit solution to the ODE for v_{0,t} in Section 6 
 for with piecewise-constant parameters which is:
 
-dv_{0,t} = kap(the - v_{0,t})v_{0,t}*dt 
+dv_{0,t} = kap(the - v_{0,t}) v_{0,t} dt 
 
 which pertains to the Verhulst model and is solved through the Methods:
 
@@ -18,7 +18,7 @@ which pertains to the Verhulst model and is solved through the Methods:
 
 In addition, we also include methods for the ODE
 
-dv_{0,t} = kap(the - v_{0,t})*dt 
+dv_{0,t} = kap(the - v_{0,t}) dt 
 
 which pertains to the Heston model, IGa model and generally any model with the usual linear mean reversion drift,
 and is solved using the Methods:

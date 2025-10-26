@@ -7,12 +7,12 @@ Article: "Explicit approximations of option prices via Malliavin calculus in a
 general stochastic volatility framework"
 
 Description: Computes the PBS functions and their partial derivatives as given in 
-Appendix E of the article.
+Appendix D of the article.
 """
 
 
 import copy as cp
-from math import exp, log,sqrt
+from math import exp, log, sqrt
 from collections import deque
 from scipy.stats import norm
 
@@ -21,7 +21,7 @@ def parPBS_pw(x, y, Strk, _rd_deque, _rf_deque, _dt):
     
     """
     Computes the PBS functions and their partial derivatives as given in 
-    Appendix E of the article.
+    Appendix D of the article.
 
     x (float): First argument of PBS.
     y (float) Second argument of PBS.

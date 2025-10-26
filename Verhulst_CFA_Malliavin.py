@@ -6,11 +6,11 @@
 Article: "Explicit approximations of option prices via Malliavin calculus in a
 general stochastic volatility framework"
 
-Description: Computes the price of a European put option in the XGBM (Verhulst/Logistic) model
+Description: Computes the price of a European put option in the Verhulst (XGBM/Logistic) model
 with piecewise-constant parameters
 
-dS = (rd - rf)S*dt + V*S*dW,
-dV = kap(the - V)V*dt + lam*V*dB,
+dS = (rd - rf) S dt + V S dW,
+dV = kap(the - V) V dt + lam V dB,
 dW dB = rho dt
 
 via the Malliavin closed-form approximation formula given by Corollary 6.1 in the article.
@@ -31,8 +31,7 @@ from timeit import default_timer as timer
 def Verhulst_CFA_Malliavin(model_params, global_params):
 
     """
-
-    Computes the price of a European put option in the XGBM (Verhulst/Logistic) model
+    Computes the price of a European put option in the Verhulst (XBGM/Logistic) model
     with piecewise-constant parameters via the Malliavin closed-form approximation formula given by Corollary 6.1 in the article.
 
     model_params (list): [kap, the, lam, rho] is a list of np.arrays, 
@@ -75,7 +74,6 @@ def Verhulst_CFA_Malliavin(model_params, global_params):
     # Copy deques
     rd_deque = cp.copy(_rd_deque)
     rf_deque = cp.copy(_rf_deque)
-    # olddt = cp.copy(_dt)
     dt = cp.copy(_dt)
     
     T = sum(dt)
@@ -101,6 +99,7 @@ def Verhulst_CFA_Malliavin(model_params, global_params):
     # Precompute the parameters to input into OmgG functions
     mkap = -1*kap
     mthe = -1*the
+    # kapthe = np.multiply(kap,the)
     kapthe = kap*the
     t2kapthe = 2*kapthe
     mkapthe = -1*kapthe
@@ -188,7 +187,6 @@ def Verhulst_CFA_Malliavin(model_params, global_params):
             d_mt2the.append(mt2the_temp)
             d_f4kap.append(f4kap_temp)
             d_mf4kap.append(mf4kap_temp)
-            d_mt2kap.append(mt2kap_temp)
             d_lamsq.append(lamsq_temp)
             d_rholam.append(rholam_temp)
             d_ones.append(1.0)
@@ -198,7 +196,7 @@ def Verhulst_CFA_Malliavin(model_params, global_params):
             sumDTtilde += DTtilde
                                 
             
-    # Solve ODE for v_{0,t}
+    # Compute v_{0,t} using its explicit solution
     oded_kap = cp.copy(d_kap)
     oded_the = cp.copy(d_the)
     ode_dttilde = cp.copy(dttilde)
@@ -206,7 +204,6 @@ def Verhulst_CFA_Malliavin(model_params, global_params):
     # v = ODE_Solver_Verhulst(oded_kap, oded_the, V0, ode_dttilde)
     v = ODE_Solution_Verhulst(oded_kap, oded_the, V0, ode_dttilde)
 
-    
     
     
     # Compute \int_0^T v_{0,t}^2 dt
@@ -220,25 +217,23 @@ def Verhulst_CFA_Malliavin(model_params, global_params):
         Vtempsqr = Vtemp**2
         intvsqr += Vtempsqr*DTtilde
  
-    
     # Compute partial derivatives of PBS
     (PBS, yPBS, yyPBS, xyPBS, xxyPBS, xxyyPBS) = parPBS_pw(x0, intvsqr, Strk, nrd_deque, nrf_deque, dttilde)  
         
-    # Compute coeffcients of the PBS partial derivatives
-    yterm = OmgG3(d_mt2kapthe, d_f4kap, d_lamsq, d_kapthe, d_mt2kap, d_mt2kap, d_kapthe, d_mt2kap, d_ones, v, deque([2 ,0, 1]), dttilde)+\
+    # Compute coefficients of the PBS partial derivatives
+    yterm = OmgG3(d_mt2kapthe, d_f4kap, d_lamsq, d_kapthe, d_mt2kap, d_mt2kap, d_kapthe, d_mt2kap, d_ones, v, deque([2, 0, 1]), dttilde)+\
     OmgG2(d_mt2kapthe, d_f4kap, d_lamsq, d_t2kapthe, d_mf4kap, d_ones, v,  deque([2, 0]), dttilde)
     
     xyterm = 2*OmgG2(d_mkapthe, d_t2kap, d_rholam, d_kapthe, d_mt2kap, d_ones, v, deque([2, 1]), dttilde)
         
-    xxyterm =2*OmgG4(d_mkapthe, d_t2kap, d_rholam, d_mkapthe, d_t2kap, d_rholam, d_kapthe, d_mt2kap, d_mt2kap, d_kapthe, d_mt2kap, d_ones, v, deque([2, 2, 0, 1]), dttilde)+\
+    xxyterm = 2*OmgG3(d_mkapthe, d_t2kap, d_rholam, d_mkapthe, d_t2kap, d_rholam, d_t2kapthe, d_mf4kap, d_ones, v, deque([2, 2, 0]), dttilde)+\
+    2*OmgG4(d_mkapthe, d_t2kap, d_rholam, d_mkapthe, d_t2kap, d_rholam, d_kapthe, d_mt2kap, d_mt2kap, d_kapthe, d_mt2kap, d_ones, v, deque([2, 2, 0, 1]), dttilde)+\
     4*OmgG3(d_mkapthe, d_t2kap, d_rholam, d_zeros, d_zeros, d_rholam, d_kapthe, d_mt2kap, d_ones, v, deque([2, 1, 1]), dttilde) 
     
-    yyterm = 4*OmgG3(d_mt2kapthe, d_f4kap, d_lamsq, d_kapthe, d_mt2kap, d_ones, d_kapthe, d_mt2kap, d_ones, v, deque([2,1,1]), dttilde)
+    yyterm = 4*OmgG3(d_mt2kapthe, d_f4kap, d_lamsq, d_kapthe, d_mt2kap, d_ones, d_kapthe, d_mt2kap, d_ones, v, deque([2, 1, 1]), dttilde)
     
     xxyyterm = 2*(OmgG2(d_mkapthe, d_t2kap, d_rholam, d_kapthe, d_mt2kap, d_ones, v, deque([2, 1]), dttilde))**2
-   
-    
-   
+
 
 
     res = PBS + xyterm*xyPBS + xxyterm*xxyPBS + yyterm*yyPBS \
@@ -271,7 +266,7 @@ if __name__ == '__main__':
     
     # Global parameters
     S0 = 100
-    V0 = 0.18       # V0 is initial variance for Heston and GARCH
+    V0 = 0.18
     rd3 = 0.02
     rd2 = 0.03
     rd1 = 0.01
@@ -281,27 +276,30 @@ if __name__ == '__main__':
     dt3 = 6/12
     dt2 = 3/12
     dt1 = 3/12
+    T = 1/12        # maturity
+    dt3 = (1/2)*T
+    dt2 = (1/4)*T
+    dt1 = (1/4)*T
     
     rd_deque = deque([rd3, rd2, rd1])
-    rf_deque = deque([rf3, rf2, rd1])
+    rf_deque = deque([rf3, rf2, rf1])
     dt = deque([dt3, dt2, dt1])
     
-    rd_deque = deque([rd3])
-    rf_deque = deque([rf3])
-    dt = deque([dt3])
+    # rd_deque = deque([rd3])
+    # rf_deque = deque([rf3])
+    # dt = deque([dt3])
     
     Delta = 0.5
-    sig = np.sqrt(V0)
-    Strk = DeltaStrikes_pw(S0, sig, rd_deque, rf_deque, dt, Delta, 'Put')
+    Strk = DeltaStrikes_pw(S0, V0, rd_deque, rf_deque, dt, Delta, 'Put')
     # Strk = S0*1.01
     
     # Model parameters
     kap3 = 5.0
     kap2 = 5.1
     kap1 = 4.9
-    the3 = 0.15
-    the2 = 0.16
-    the1 = 0.14
+    the3 = 0.015
+    the2 = 0.016
+    the1 = 0.014
     lam3 = 0.4142
     lam2 = 0.4342
     lam1 = 0.3942
@@ -314,18 +312,19 @@ if __name__ == '__main__':
     lam_ar = np.array([lam3, lam2, lam1])
     rho_ar = np.array([rho3, rho2, rho1])
     
-    kap_ar = np.array([kap3])
-    the_ar = np.array([the3])
-    lam_ar = np.array([lam3])
-    rho_ar = np.array([rho3])
+    # kap_ar = np.array([kap3])
+    # the_ar = np.array([the3])
+    # lam_ar = np.array([lam3])
+    # rho_ar = np.array([rho3])
     
     
-    # N_dttilde is the number of points in the grid for solving the ODE. 
-    # Don't make it too fine or the Omg functions will have a bad time (try N_dttilde = 40 for example). 
-    # Don't make it too coarse or the approximations to integrals involving 
-    # v_{0,t} will be bad.
 
-    N_dttilde = 35
+
+    # N_dttilde is the number of points in the grid for evaluating v_{0,t}
+    # Do not make it too fine or the Omg functions will be slow (try N_dttilde = 27 for example). 
+    # Do not make it too coarse or the approximations to integrals involving 
+    # v_{0,t} will be poor.
+    N_dttilde = 27
 
     global_params = [S0, V0, rd_deque, rf_deque, Strk, dt, N_dttilde]
     model_params = [kap_ar, the_ar, lam_ar, rho_ar]

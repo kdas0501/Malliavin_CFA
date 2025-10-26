@@ -9,8 +9,8 @@ general stochastic volatility framework"
 Description: Computes the Monte-Carlo price of a European put or call option where parameters 
 are piecewise-constant using the log mixing solution method in a general model:
 
-dS = (rd - rf)Sdt + S(V or sqrt{V})dW
-dV = alpha(t,V)dt + beta(t,V) dB
+dS = (rd - rf) S dt + S (V or sqrt{V}) dW
+dV = alpha(t,V) dt + beta(t,V) dB
 dW dB = rho dt
 
 """
@@ -30,8 +30,8 @@ def Monte_mixing_pw(model_params, global_params, N_PATH, N_TIME, model, option):
     Computes the Monte-Carlo price of a European put or call option where parameters 
     are piecewise-constant using the log mixing solution method in a general model:
 
-    dS = (rd - rf)Sdt + S(V or sqrt{V})dW
-    dV = alpha(t,V)dt + beta(t,V) dB
+    dS = (rd - rf) S dt + S (V or sqrt{V}) dW
+    dV = alpha(t,V) dt + beta(t,V) dB
     dW dB = rho dt
 
     model_params (list): [kap_ar, the_ar, lam_ar, rho_ar] is a list of np.arrays, 
@@ -53,7 +53,8 @@ def Monte_mixing_pw(model_params, global_params, N_PATH, N_TIME, model, option):
       g gives "GARCH", variance & dV = kap(the - V)dt + lam V dB,
       i gives "Inverse-Gamma", volatility & dV = kap(the - V)dt + lam V dB,
       h gives "Heston", variance & dV = kap(the - V)dt + lam sqrt{V} dB,
-      v gives "Verhulst", volatility & dV = kap*V*(the - V)dt + lam V dB.
+      v gives "Verhulst", volatility & dV = kap*V*(the - V)dt + lam V dB,
+      s gives "SABR-mu", volatility & dV = lam V^mu dB
     option (str): 'Put' or 'Call'.
 
     """
@@ -163,7 +164,7 @@ def Monte_mixing_pw(model_params, global_params, N_PATH, N_TIME, model, option):
     Rex = np.zeros([N_PATH])
     Rey = np.zeros([N_PATH])
 
-# Test: Volatility and dV = dB         
+    # Test: Volatility and dV = dB         
     if model == "t":
         for tt in range(N_TIME):
             
@@ -178,7 +179,7 @@ def Monte_mixing_pw(model_params, global_params, N_PATH, N_TIME, model, option):
             It += rho*V*sqrtDT*RND
             V += sqrtDT*RND
     
-    # Ornstein Uhlenbeck: Volatility & dV = kap(the - V)dt + lam*dB_t     
+    # Ornstein Uhlenbeck: Volatility & dV = kap(the - V)dt + lam dB_t     
     elif model == "o":
         for tt in range(N_TIME):
             
@@ -202,7 +203,7 @@ def Monte_mixing_pw(model_params, global_params, N_PATH, N_TIME, model, option):
             It += rho*V*sqrtDT*RND
             V += kaptheDT-kapDT*V + lam*sqrtDT*RND
             
-    # GARCH: Variance & dV = kap(the - V)dt + lam*V*dB_t
+    # GARCH: Variance & dV = kap(the - V)dt + lam V dB_t
     elif model == "g":
         for tt in range(N_TIME):
             
@@ -227,7 +228,7 @@ def Monte_mixing_pw(model_params, global_params, N_PATH, N_TIME, model, option):
             It += rho*sqrtmV*sqrtDT*RND
             V += kaptheDT-mV*kapDT + lam*mV*sqrtDT*RND
 
-    # Inverse Gamma: Volatility & dV = kap(the - V)dt + lam*V*dB_t
+    # Inverse Gamma: Volatility & dV = kap(the - V)dt + lam V dB_t
     elif model == "i":
         for tt in range(N_TIME):
             
@@ -251,7 +252,7 @@ def Monte_mixing_pw(model_params, global_params, N_PATH, N_TIME, model, option):
             It += rho*V*sqrtDT*RND
             V += kaptheDT-V*kapDT + lam*V*sqrtDT*RND
             
-    # Heston: Variance & dV = kap(the - V)dt + lam*sqrt{V}*dB_t 
+    # Heston: Variance & dV = kap(the - V)dt + lam sqrt{V} dB_t 
     elif model == "h":       
         if 2*kapthe < lam**2:
             print("\nFeller test fail!")
@@ -281,7 +282,7 @@ def Monte_mixing_pw(model_params, global_params, N_PATH, N_TIME, model, option):
             It += rho*sqrtmV*sqrtDT*RND
             V += kaptheDT-mV*kapDT + lam*sqrtmV*sqrtDT*RND
             
-    # Verhulst: Variance & dV = kap*V*(the - V)dt + lam*V*dB_t 
+    # Verhulst: Volatility & dV = kap*V*(the - V)dt + lam V dB_t 
     elif model == "v":       
         for tt in range(N_TIME):
             
@@ -305,6 +306,30 @@ def Monte_mixing_pw(model_params, global_params, N_PATH, N_TIME, model, option):
 
             It += rho*V*sqrtDT*RND
             V += kaptheDT*V-kapDT*Vsqr+ lam*V*sqrtDT*RND
+
+    # SABR-mu: Volatility & dV = lam V^mu dB_t 
+    # Here kappa is the mu value.
+    elif model == "s":       
+        mu = kap
+        for tt in range(N_TIME):
+            
+            if tt > N_TIME_running:
+                lam = d_lam.pop()
+                rho = d_rho.pop()
+                rhosq = d_rhosq.pop()
+                omrhosq = d_omrhosq.pop()
+                
+                dt_running += dt.pop()
+                N_TIME_running = int(dt_running/DT)
+                                
+            RND = np.random.normal(0,1,N_PATH)
+            Vsqr = V**2
+            Vmu = np.maximum(V,0)**mu
+            Rex += rhosq*Vsqr*DT
+            Rey += omrhosq*Vsqr*DT
+
+            It += rho*V*sqrtDT*RND
+            V += lam*Vmu*sqrtDT*RND
         
 
         
@@ -368,30 +393,31 @@ if __name__ == '__main__':
     rf3 = 0.00
     rf2 = 0.00
     rf1 = 0.00
-    dt3 = 6/12
-    dt2 = 3/12
-    dt1 = 3/12
+    T = 1/12        # maturity
+    dt3 = 1/2*T
+    dt2 = 1/4*T
+    dt1 = 1/4*T
     
     rd_deque = deque([rd3, rd2, rd1])
     rf_deque = deque([rf3, rf2, rd1])
     dt = deque([dt3, dt2, dt1])
 
-    rd_deque = deque([rd3])
-    rf_deque = deque([rf3])
-    dt = deque([dt3])
+    # rd_deque = deque([rd3])
+    # rf_deque = deque([rf3])
+    # dt = deque([dt3])
     
     Delta = 0.5
-    sig = np.sqrt(V0)
-    Strk = DeltaStrikes_pw(S0, sig, rd_deque, rf_deque, dt, Delta, 'Put')
+    #sig = np.sqrt(V0)
+    Strk = DeltaStrikes_pw(S0, V0, rd_deque, rf_deque, dt, Delta, 'Put')
     # Strk = S0*1.01
     
     # Model parameters
     kap3 = 5.0
     kap2 = 5.1
     kap1 = 4.9
-    the3 = 0.15
-    the2 = 0.16
-    the1 = 0.14
+    the3 = 0.015
+    the2 = 0.016
+    the1 = 0.014
     lam3 = 0.4142
     lam2 = 0.4342
     lam1 = 0.3942
@@ -404,17 +430,23 @@ if __name__ == '__main__':
     lam_ar = np.array([lam3, lam2, lam1])
     rho_ar = np.array([rho3, rho2, rho1])
 
-    kap_ar = np.array([kap3])
-    the_ar = np.array([the3])
-    lam_ar = np.array([lam3])
-    rho_ar = np.array([rho3])
+    # kap_ar = np.array([kap3])
+    # the_ar = np.array([the3])
+    # lam_ar = np.array([lam3])
+    # rho_ar = np.array([rho3])
+
+    # For SABR-mu make mu = kap and model s
+    # mu = 1
+    # kap_ar = np.array([mu, mu, mu])
+    # kap_ar = np.array([mu])
+
     
     
     global_params = [S0, V0, rd_deque, rf_deque, Strk, dt]
     model_params = [kap_ar, the_ar, lam_ar, rho_ar]
     
     # Monte-Carlo parameters
-    N_PATH = 500000
+    N_PATH = 250000
     Steps_day_N = 24
     N_TIME = int(Steps_day_N*253*sum(dt)) 
     
